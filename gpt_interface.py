@@ -7,7 +7,9 @@ import functools
 import logging
 
 import json
-import inspect
+from function_inspector import generate_function_metadata
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass()
@@ -38,17 +40,17 @@ class GPTConversation:
             "content": content,
         }
         self.messages.append(message)
-        logging.debug(f"Sending message: {content}")
+        logger.info(f"Sending message: {content}")
         response = self.send()
-        logging.debug(f"Rendering response...")
+        logger.info(f"Rendering response...")
         rendered_response = self.render_response(response)
-        response_content= response_to_message(rendered_response)["content"]
-        logging.debug(f"Received response: {response_content}")
+        response_content = response_to_message(rendered_response)["content"]
+        logger.info(f"Received response: {response_content}")
         return response_content
 
     def execute_function(self, function_call):
         function_name = function_call["function_call"]["name"]
-        logging.debug(f"Executing function '{function_name}'")
+        logger.info(f"Executing function '{function_name}'")
         function_to_call = self.function_name_mapping[function_name]
         function_args = json.loads(function_call["function_call"]["arguments"])
         function_response = function_to_call(**function_args)
@@ -70,31 +72,9 @@ class GPTConversation:
             return self.render_response(after_function_response)
         return response
 
+    def get_messages_history(self):
+        return self.messages
+
 
 def response_to_message(response):
     return response["choices"][0]["message"]
-
-
-def generate_function_metadata(function: Callable):
-    signature = inspect.signature(function)
-    parameters = signature.parameters
-    param_metadata = []
-
-    for param_name, param in parameters.items():
-        param_info = {
-            "name": param_name,
-            "type": "string",  # Adjust as needed based on parameter type
-            "description": "",  # Add description if desired
-        }
-        param_metadata.append(param_info)
-
-    function_metadata = {
-        "name": function.__name__,
-        "description": function.__doc__.strip(),
-        "parameters": {
-            "type": "object",
-            "properties": {param["name"]: param for param in param_metadata},
-            "required": [param["name"] for param in param_metadata],
-        },
-    }
-    return function_metadata

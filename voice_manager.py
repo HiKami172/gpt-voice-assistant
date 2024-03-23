@@ -3,6 +3,8 @@ import pyttsx3
 import logging
 import settings
 
+logger = logging.getLogger(__name__)
+
 
 class VoiceManager:
 
@@ -15,23 +17,23 @@ class VoiceManager:
         self.vocalizing_engine.setProperty('voice', self.voices[1].id)
 
     def speak(self, text):
-        logging.debug(f"Speaking: {text}")
+        logger.info(f"Speaking: {text}")
         self.vocalizing_engine.say(text)
         self.vocalizing_engine.runAndWait()
 
     def listen(self):
         with sr.Microphone() as source:
-            logging.debug("Listening...")
+            logger.info("Listening...")
             return self.recognizer.listen(source)
 
     def recognize(self, audio):
         try:
-            logging.debug("Recognizing...")
-            query = self.recognizer.recognize_google(audio, language='en-in')
+            logger.info("Recognizing...")
+            query = self.recognizer.recognize_google(audio, language="ru-in")
         except Exception as e:
-            logging.error(f"Can't recognize the text: {e}")
+            logger.error(f"Can't recognize the text: {e}")
             return None
-        logging.debug(f"Received command: {query}")
+        logger.info(f"Received command: {query}")
         return query
 
     def take_command(self):
